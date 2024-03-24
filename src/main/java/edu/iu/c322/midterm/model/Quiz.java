@@ -22,7 +22,7 @@ public class Quiz {
         String line = String.format("%1s,%2s, %3s",
                 quizId,
                 getTitle(),
-                              questionIds);
+                questionIds);
         return line;
     }
 

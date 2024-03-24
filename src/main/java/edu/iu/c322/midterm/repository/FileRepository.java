@@ -25,7 +25,7 @@ public class FileRepository {
 
     public FileRepository() {
         File imagesDirectory = new File(IMAGES_FOLDER_PATH);
-        if(!imagesDirectory.exists()) {
+        if (!imagesDirectory.exists()) {
             imagesDirectory.mkdirs();
         }
     }
@@ -42,8 +42,8 @@ public class FileRepository {
         Path path = Paths.get(QUESTION_DATABASE_NAME);
         List<Question> questions = findAllQuestions();
         int id = 0;
-        for(Question q : questions) {
-            if(q.getId() > id) {
+        for (Question q : questions) {
+            if (q.getId() > id) {
                 id = q.getId();
             }
         }
@@ -55,16 +55,13 @@ public class FileRepository {
     }
 
 
-
-
-
     public List<Question> findAllQuestions() throws IOException {
         List<Question> result = new ArrayList<>();
         Path path = Paths.get(QUESTION_DATABASE_NAME);
         if (Files.exists(path)) {
             List<String> data = Files.readAllLines(path);
             for (String line : data) {
-                if(line.trim().length() != 0) {
+                if (line.trim().length() != 0) {
                     Question q = Question.fromLine(line);
                     result.add(q);
                 }
@@ -72,9 +69,6 @@ public class FileRepository {
         }
         return result;
     }
-
-
-
 
 
     public List<Question> find(String answer) throws IOException {
@@ -89,7 +83,7 @@ public class FileRepository {
         return result;
     }
 
-    public List<Question> find(List<Integer> ids) throws IOException {
+    public List<Question> findQuestionsByIds(List<Integer> ids) throws IOException {
         List<Question> questions = findAllQuestions();
         List<Question> result = new ArrayList<>();
         for (int id : ids) {
@@ -98,7 +92,6 @@ public class FileRepository {
         }
         return result;
     }
-
 
 
     public Question get(Integer id) throws IOException {
@@ -131,5 +124,64 @@ public class FileRepository {
         return image;
     }
 
+    public int addQuiz(Quiz quiz) throws IOException {
+        Path path = Paths.get(QUIZ_DATABASE_NAME);
+        List<Quiz> quizzes = findAllQuizzes();
+        int id = 0;
+        for (Quiz q : quizzes) {
+            if (q.getId() > id) {
+                id = q.getId();
+            }
+        }
+        id = id + 1;
+        quiz.setId(id);
+        String data = quiz.toLine(id);
+        appendToFile(path, data + NEW_LINE);
+        return id;
+    }
 
+    public List<Quiz> findAllQuizzes() throws IOException {
+        List<Quiz> result = new ArrayList<>();
+        Path path = Paths.get(QUIZ_DATABASE_NAME);
+        if (Files.exists(path)) {
+            List<String> data = Files.readAllLines(path);
+            for (String line : data) {
+                if (line.trim().length() != 0) {
+                    Quiz q = Quiz.fromLine(line);
+                    List<Question> questions = findQuestionsByIds(q.getQuestionIds());
+                    q.setQuestions(questions);
+                    result.add(q);
+                }
+            }
+        }
+        return result;
+    }
+
+    public Quiz findQuizbyID(int id) throws IOException {
+        List<Quiz> quizzes = findAllQuizzes();
+        for (Quiz quiz : quizzes) {
+            if (quiz.getId() == id) {
+                List<Question> questions = findQuestionsByIds(quiz.getQuestionIds());
+                quiz.setQuestions(questions);
+                return quiz;
+            }
+        }
+        return null;
+    }
+
+    public void updateQuiz(Quiz quiz) throws IOException {
+        List<Quiz> quizzes = findAllQuizzes();
+        for (int i = 0; i < quizzes.size(); i++) {
+            if (quizzes.get(i).getId() == quiz.getId()) {
+                quizzes.set(i, quiz);
+                break;
+            }
+        }
+        Path path = Paths.get(QUIZ_DATABASE_NAME);
+        Files.delete(path);
+        for (Quiz q : quizzes) {
+            String data = q.toLine(q.getId());
+            appendToFile(path, data + NEW_LINE);
+        }
+    }
 }
